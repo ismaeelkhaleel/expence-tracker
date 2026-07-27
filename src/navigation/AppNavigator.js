@@ -34,7 +34,7 @@ const TabNavigator = () => {
           if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
           else if (route.name === 'Transactions') iconName = focused ? 'list' : 'list-outline';
           else if (route.name === 'Analytics') iconName = focused ? 'pie-chart' : 'pie-chart-outline';
-          else if (route.name === 'Borrow/Lend') iconName = focused ? 'people' : 'people-outline';
+          else if (route.name === 'People') iconName = focused ? 'people' : 'people-outline';
           else if (route.name === 'Settings') iconName = focused ? 'settings' : 'settings-outline';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -43,7 +43,7 @@ const TabNavigator = () => {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Transactions" component={TransactionsScreen} />
       <Tab.Screen name="Analytics" component={AnalyticsScreen} />
-      <Tab.Screen name="Borrow/Lend" component={BorrowLendScreen} />
+      <Tab.Screen name="People" component={BorrowLendScreen} options={{ title: 'People' }} />
       <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
@@ -76,7 +76,7 @@ export default function AppNavigator() {
       }}>
         <Stack.Screen name="MainTabs" component={TabNavigator} options={{ headerShown: false }} />
         <Stack.Screen name="AddTransaction" component={AddTransactionScreen} options={({ route }) => ({ title: route.params?.type === 'income' ? 'Add Income' : 'Add Expense' })} />
-        <Stack.Screen name="AddBorrowLend" component={AddBorrowLendScreen} options={({ route }) => ({ title: route.params?.type === 'lend' ? 'Money I Gave' : 'Money I Owe' })} />
+        <Stack.Screen name="AddBorrowLend" component={AddBorrowLendScreen} options={{ title: 'Add Balance' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

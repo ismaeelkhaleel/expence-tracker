@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, SectionList, TouchableOpacity, Alert, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, SectionList, TouchableOpacity, Alert, TextInput, ActivityIndicator, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppContext } from '../context/AppContext';
 import { getTransactionsPaginated } from '../storage/database';
 import { formatCurrency } from '../utils/format';
 import { typography } from '../theme';
 import { TRANSACTION_TYPES } from '../constants/categories';
-import { format } from 'date-fns';
+import { format, subMonths } from 'date-fns';
+import { getMonthKey } from '../utils/calculations';
 
 const getCategoryIcon = (category) => {
   switch(category) {
@@ -29,6 +30,8 @@ export default function TransactionsScreen({ navigation }) {
   
   const [filterType, setFilterType] = useState('all'); // 'all', 'expense', 'income'
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [monthModalVisible, setMonthModalVisible] = useState(false);
   
   const [transactions, setTransactions] = useState([]);
   const [offset, setOffset] = useState(0);
@@ -41,7 +44,7 @@ export default function TransactionsScreen({ navigation }) {
     
     try {
       const currentOffset = reset ? 0 : offset;
-      const newItems = await getTransactionsPaginated(PAGE_SIZE, currentOffset, searchQuery, filterType);
+      const newItems = await getTransactionsPaginated(PAGE_SIZE, currentOffset, searchQuery, filterType, getMonthKey(selectedMonth));
       
       if (reset) {
         setTransactions(newItems);
@@ -56,12 +59,17 @@ export default function TransactionsScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
-  }, [offset, searchQuery, filterType, loading]);
+  }, [offset, searchQuery, filterType, selectedMonth, loading]);
 
   // Initial load & refresh trigger
   useEffect(() => {
     fetchTransactions(true);
-  }, [refreshTrigger, filterType, searchQuery]);
+  }, [refreshTrigger, filterType, searchQuery, selectedMonth]);
+
+  const monthOptions = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 24 }, (_, index) => subMonths(now, index));
+  }, []);
 
   const groupedTransactions = useMemo(() => {
     const groups = {};
@@ -161,6 +169,19 @@ export default function TransactionsScreen({ navigation }) {
         )}
       </View>
 
+      <TouchableOpacity
+        style={[styles.monthSelector, { backgroundColor: theme.surface, borderColor: theme.border }]}
+        onPress={() => setMonthModalVisible(true)}
+      >
+        <View style={styles.monthSelectorText}>
+          <Ionicons name="calendar-outline" size={20} color={theme.primary} />
+          <Text style={[typography.body, { color: theme.text, fontWeight: 'bold', marginLeft: 8 }]}>
+            {format(selectedMonth, 'MMMM yyyy')}
+          </Text>
+        </View>
+        <Ionicons name="chevron-down" size={18} color={theme.textSecondary} />
+      </TouchableOpacity>
+
       {/* Filter Tabs */}
       <View style={styles.filterTabs}>
         <TouchableOpacity 
@@ -198,7 +219,7 @@ export default function TransactionsScreen({ navigation }) {
             <View style={styles.emptyContainer}>
               <Ionicons name="receipt-outline" size={64} color={theme.textSecondary} style={{ opacity: 0.5 }} />
               <Text style={[typography.body, { color: theme.textSecondary, marginTop: 16 }]}>
-                {searchQuery ? 'No transactions found.' : 'No transactions yet.'}
+                {searchQuery ? 'No transactions found.' : 'No transactions for this month.'}
               </Text>
             </View>
           )
@@ -209,6 +230,33 @@ export default function TransactionsScreen({ navigation }) {
         onEndReachedThreshold={0.5}
         ListFooterComponent={renderFooter}
       />
+
+      <Modal visible={monthModalVisible} transparent animationType="fade" onRequestClose={() => setMonthModalVisible(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setMonthModalVisible(false)}>
+          <View style={[styles.monthModal, { backgroundColor: theme.surface }]}>
+            <Text style={[typography.h3, { color: theme.text, marginBottom: 12 }]}>Select Month</Text>
+            <ScrollView style={{ maxHeight: 360 }}>
+              {monthOptions.map(month => {
+                const selected = getMonthKey(month) === getMonthKey(selectedMonth);
+                return (
+                  <TouchableOpacity
+                    key={month.toISOString()}
+                    style={[styles.monthOption, { backgroundColor: selected ? theme.primary : 'transparent' }]}
+                    onPress={() => {
+                      setSelectedMonth(month);
+                      setMonthModalVisible(false);
+                    }}
+                  >
+                    <Text style={[typography.body, { color: selected ? '#fff' : theme.text, fontWeight: selected ? 'bold' : 'normal' }]}>
+                      {format(month, 'MMMM yyyy')}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -234,6 +282,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     marginBottom: 16,
+  },
+  monthSelector: {
+    marginHorizontal: 16,
+    marginTop: -4,
+    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  monthSelectorText: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   tab: {
     paddingVertical: 8,
@@ -284,5 +348,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 64,
-  }
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  monthModal: {
+    borderRadius: 12,
+    padding: 16,
+  },
+  monthOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
 });

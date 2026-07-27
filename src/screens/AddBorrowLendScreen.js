@@ -6,8 +6,7 @@ import { format } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function AddBorrowLendScreen({ navigation, route }) {
-  const { type } = route.params; // 'lend' or 'borrow'
-  const isLend = type === 'lend';
+  const { type = 'lend' } = route.params || {}; // 'lend' or 'borrow'
   
   const { theme, addLendRecord, editLendRecord, addBorrowRecord, editBorrowRecord } = useAppContext();
   
@@ -16,6 +15,7 @@ export default function AddBorrowLendScreen({ navigation, route }) {
 
   const [personName, setPersonName] = useState(existingRecord ? existingRecord.personName : '');
   const [amount, setAmount] = useState(existingRecord ? existingRecord.amount.toString() : '');
+  const [recordType, setRecordType] = useState(existingRecord ? existingRecord.type : type);
   const [date, setDate] = useState(existingRecord ? new Date(existingRecord.date) : new Date());
   const [note, setNote] = useState(existingRecord ? existingRecord.note : '');
 
@@ -60,7 +60,7 @@ export default function AddBorrowLendScreen({ navigation, route }) {
       note,
     };
 
-    if (isLend) {
+    if (recordType === 'lend') {
       if (isEdit) await editLendRecord(record.id, record);
       else await addLendRecord(record);
     } else {
@@ -82,6 +82,28 @@ export default function AddBorrowLendScreen({ navigation, route }) {
           placeholder="e.g. John Doe"
           placeholderTextColor={theme.textSecondary}
         />
+
+        <Text style={[typography.caption, { color: theme.textSecondary, marginTop: 16, marginBottom: 8 }]}>Type *</Text>
+        <View style={styles.typeRow}>
+          <TouchableOpacity
+            style={[
+              styles.typeChip,
+              { borderColor: recordType === 'lend' ? theme.success : theme.border, backgroundColor: recordType === 'lend' ? theme.success : theme.background }
+            ]}
+            onPress={() => setRecordType('lend')}
+          >
+            <Text style={{ color: recordType === 'lend' ? '#fff' : theme.text, fontWeight: 'bold' }}>I will receive</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.typeChip,
+              { borderColor: recordType === 'borrow' ? theme.danger : theme.border, backgroundColor: recordType === 'borrow' ? theme.danger : theme.background }
+            ]}
+            onPress={() => setRecordType('borrow')}
+          >
+            <Text style={{ color: recordType === 'borrow' ? '#fff' : theme.text, fontWeight: 'bold' }}>I owe</Text>
+          </TouchableOpacity>
+        </View>
 
         <Text style={[typography.caption, { color: theme.textSecondary, marginTop: 16, marginBottom: 8 }]}>Amount *</Text>
         <TextInput
@@ -137,6 +159,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+  },
+  typeRow: {
+    flexDirection: 'row',
+  },
+  typeChip: {
+    flex: 1,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 12,
+    marginRight: 8,
   },
   datePicker: {
     flexDirection: 'row',

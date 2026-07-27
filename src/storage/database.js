@@ -63,9 +63,14 @@ export const saveSetting = async (key, value) => {
 };
 
 // -- Transactions --
-export const getTransactionsPaginated = async (limit, offset, searchQuery, filterType) => {
+export const getTransactionsPaginated = async (limit, offset, searchQuery, filterType, monthKey) => {
   let query = 'SELECT * FROM transactions WHERE 1=1';
   const params = [];
+
+  if (monthKey) {
+    query += ' AND date LIKE ?';
+    params.push(`${monthKey}%`);
+  }
 
   if (searchQuery) {
     query += ' AND (note LIKE ? OR category LIKE ?)';
@@ -82,6 +87,18 @@ export const getTransactionsPaginated = async (limit, offset, searchQuery, filte
 
   const statement = await db.prepareAsync(query);
   const result = await statement.executeAsync(params);
+  return await result.getAllAsync();
+};
+
+export const getLatestTransactions = async (limit = 5) => {
+  const statement = await db.prepareAsync('SELECT * FROM transactions ORDER BY date DESC LIMIT ?');
+  const result = await statement.executeAsync([limit]);
+  return await result.getAllAsync();
+};
+
+export const getDateTransactions = async (dateKey) => {
+  const statement = await db.prepareAsync('SELECT * FROM transactions WHERE date LIKE ? ORDER BY date DESC');
+  const result = await statement.executeAsync([`${dateKey}%`]);
   return await result.getAllAsync();
 };
 

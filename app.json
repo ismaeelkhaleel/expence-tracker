@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "expence",
+    "name": "My Pocket",
     "slug": "expence",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -31,7 +31,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Allow Expense Tracker to use Face ID."
+          "faceIDPermission": "Allow My Pocket to use Face ID."
         }
       ]
     ],
