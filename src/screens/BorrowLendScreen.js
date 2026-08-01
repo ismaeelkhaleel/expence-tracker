@@ -204,10 +204,10 @@ export default function BorrowLendScreen({ navigation }) {
             />
 
             <TouchableOpacity style={[styles.modalButton, { backgroundColor: theme.success }]} onPress={() => saveAction('add')}>
-              <Text style={styles.modalButtonText}>Add Money</Text>
+              <Text style={styles.modalButtonText}>Giving</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.modalButton, { backgroundColor: theme.danger }]} onPress={() => saveAction('subtract')}>
-              <Text style={styles.modalButtonText}>Subtract Money</Text>
+              <Text style={styles.modalButtonText}>Taking</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.modalButton, { backgroundColor: theme.primary }]} onPress={() => saveAction('settle')}>
               <Text style={styles.modalButtonText}>Settle</Text>
